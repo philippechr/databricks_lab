@@ -1,8 +1,9 @@
 import dlt
 
 
-@dlt.view  # Wir definieren die Quelle oft als View
+@dlt.view
 def students_source():
+    # Stelle sicher, dass dieser Pfad exakt so existiert
     return spark.readStream.table("workspace.default.students_updates")
 
 
@@ -12,7 +13,7 @@ dlt.apply_changes(
     target="students_silver_cdc",
     source="students_source",
     keys=["student_id"],
-    sequence_by="timestamp",  # Zeitstempel der Änderung
-    apply_as_deletes="operation = 'DELETE'",  # Optional: Behandelt Löschungen
-    stored_as_scd_type=1,  # Typ 1 = Überschreiben (aktueller Stand)
+    sequence_by="sequence_id",  # Muss mit der Spalte im Setup oben übereinstimmen
+    apply_as_deletes="operation = 'DELETE'",
+    stored_as_scd_type=1,
 )
