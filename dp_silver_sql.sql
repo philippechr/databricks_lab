@@ -1,11 +1,8 @@
-CREATE OR REFRESH STREAMING TABLE enrollments_silver;
-
--- Qualitätsregel: Datensätze mit quantity <= 0 werden verworfen
-ALTER TABLE LIVE.enrollments_silver 
-ADD CONSTRAINT valid_quantity EXPECT (quantity > 0) ON VIOLATION DROP ROW;
-
--- Transformation und Join
-CREATE OR REFRESH STREAMING TABLE enrollments_silver
+-- Transformation und Join mit integrierter Qualitätsregel
+CREATE OR REFRESH STREAMING TABLE enrollments_silver (
+  CONSTRAINT valid_quantity EXPECT (quantity > 0) ON VIOLATION DROP ROW
+)
+COMMENT "Bereinigte Daten mit Qualitätsprüfung"
 AS SELECT 
   e.enroll_id,
   e.student_id,
