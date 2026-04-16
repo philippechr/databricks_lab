@@ -1,7 +1,7 @@
-CREATE OR REFRESH STREAMING TABLE enrollments_bronze_sql
-COMMENT "Rohdaten Ingest via SQL Auto Loader"
+CREATE OR REFRESH STREAMING TABLE enrollments_bronze
+COMMENT "Rohdaten-Ingest via SQL Auto Loader aus dem Volume"
 AS SELECT 
   *, 
   current_timestamp() AS arrival_time,
   _metadata.file_path AS source_file
-FROM cloud_files("/Volumes/workspace/default/volume/", "json", map("cloudFiles.inferColumnTypes", "true"));
+FROM cloud_files("/Volumes/workspace/default/volume/enrollments_raw", "json", map("cloudFiles.inferColumnTypes", "true"));

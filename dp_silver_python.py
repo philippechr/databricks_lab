@@ -1,20 +1,25 @@
 import dlt
-from pyspark.sql.functions import to_timestamp
+import pyspark.sql.functions as F
 
 
-@dlt.table(
-    name="enrollments_silver",
-    comment="Bereinigte und mit Studenten-Stammdaten angereicherte Daten.",
-)
-@dlt.expect_or_drop("valid_quantity", "quantity > 0")  # Datenqualitätsregel
+@dlt.table(name="enrollments_silver")
 def enrollments_silver():
-    # Wir lesen den Bronze-Stream
-    bronze_df = dlt.read_stream("enrollments_bronze")
-    # Statische Tabelle für den Join (muss im Katalog existieren)
-    students_df = spark.table("main.default.students")
+    # Stammdaten aus dem Katalog laden (jetzt existiert sie dank dem Setup-Skript!)
+    students_lookup_df = spark.table("workspace.default.students")
 
     return (
-        bronze_df.filter("quantity > 0")
-        .withColumn("processed_at", to_timestamp("timestamp"))
-        .join(students_df, "student_id", "left")
+        dlt.read_stream("enrollments_bronze")
+        .where("quantity > 0")
+        .withColumn("processed_at", F.to_timestamp("timestamp"))
+        .join(students_lookup_df, "student_id", "left")
+        .select(
+            "enroll_id",
+            "student_id",
+            "email",
+            "gpa",
+            "profile",
+            "quantity",
+            "courses",
+            "processed_at",
+        )
     )

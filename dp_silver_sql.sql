@@ -1,16 +1,19 @@
-CREATE OR REFRESH STREAMING TABLE enrollments_silver_sql;
+CREATE OR REFRESH STREAMING TABLE enrollments_silver;
 
--- Qualitätsregel hinzufügen
-ALTER TABLE LIVE.enrollments_silver_sql 
+-- Qualitätsregel: Datensätze mit quantity <= 0 werden verworfen
+ALTER TABLE LIVE.enrollments_silver 
 ADD CONSTRAINT valid_quantity EXPECT (quantity > 0) ON VIOLATION DROP ROW;
 
-SET spark.sql.streaming.statefulOperator.checkCorrectness.enabled = false;
-
-CREATE OR REFRESH STREAMING TABLE enrollments_silver_sql
+-- Transformation und Join
+CREATE OR REFRESH STREAMING TABLE enrollments_silver
 AS SELECT 
-  e.*,
-  to_timestamp(e.timestamp) AS processed_at,
+  e.enroll_id,
+  e.student_id,
   s.email,
-  s.gpa
-FROM STREAM(LIVE.enrollments_bronze_sql) e
-LEFT JOIN main.default.students s ON e.student_id = s.student_id;
+  s.gpa,
+  s.profile,
+  e.quantity,
+  e.courses,
+  to_timestamp(e.timestamp) AS processed_at
+FROM STREAM(LIVE.enrollments_bronze) e
+LEFT JOIN workspace.default.students s ON e.student_id = s.student_id;
